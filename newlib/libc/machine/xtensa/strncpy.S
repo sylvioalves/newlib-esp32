@@ -56,6 +56,9 @@ __strncpy_aux:
 	j	.Lfill
 
 .Lret:
+#ifdef PSRAM_FIX
+	memw
+#endif
 	leaf_return
 
 
@@ -63,7 +66,7 @@ __strncpy_aux:
 	.global	strncpy
 	.type	strncpy, @function
 strncpy:
-	leaf_entry sp
+	leaf_entry sp, 16
 	/* a2 = dst, a3 = src */
 
 	mov	a10, a2		// leave dst in return value register
@@ -120,10 +123,14 @@ strncpy:
 	s8i	a9, a10, 0	// store byte 0
 	addi	a4, a4, -1	// decrement n
 	addi	a10, a10, 1
-	bnez    a4, .Lfillcleanup
+	bnez    a4, .Lfillcleanup 
 
-2:	leaf_return
-
+2:	
+#ifdef PSRAM_FIX
+	memw
+#endif
+	leaf_return
+	
 .Lfill1mod2: // dst address is odd
 	s8i	a9, a10, 0	// store byte 0
 	addi	a4, a4, -1	// decrement n
@@ -145,9 +152,22 @@ strncpy:
 /* dst is word-aligned; src is word-aligned; n is at least 1.  */
 
 	.align	4
+#if XCHAL_HAVE_LOOPS
+#if XCHAL_HAVE_DENSITY
+	/* (2 mod 4) alignment for loop instruction */
+#else
+	/* (1 mod 4) alignment for loop instruction */
+	.byte	0
+	.byte	0
+#endif
+#endif
 .Laligned:
 #if XCHAL_HAVE_LOOPS
-	movi	a8, 0		// set up for the maximum loop count
+#if XCHAL_HAVE_DENSITY
+	_movi.n	a8, 0		// set up for the maximum loop count
+#else
+	_movi	a8, 0		// set up for the maximum loop count
+#endif
 	loop	a8, 1f		// loop forever (almost anyway)
 	blti	a4, 5, .Ldstunaligned // n is near limit; do one at a time
 	l32i	a8, a3, 0	// get word from src
@@ -159,7 +179,7 @@ strncpy:
 	addi	a4, a4, -4	// decrement n
 	addi	a10, a10, 4	// advance dst pointer
 	bnone	a8, a7, .Lfill	// if byte 3 is zero
-1:
+1:	
 
 #else /* !XCHAL_HAVE_LOOPS */
 
@@ -207,13 +227,32 @@ strncpy:
 	j	.Lfill
 
 	.align	4
-.Ldstunaligned:
 #if XCHAL_HAVE_LOOPS
-	movi	a8, 0		// set up for the maximum loop count
+#if XCHAL_HAVE_DENSITY
+	/* (2 mod 4) alignment for loop instruction */
+#else
+	/* (1 mod 4) alignment for loop instruction */
+	.byte	0
+	.byte	0
+#endif
+#endif
+.Ldstunaligned:
+
+#if XCHAL_HAVE_LOOPS
+#if XCHAL_HAVE_DENSITY
+	_movi.n	a8, 0		// set up for the maximum loop count
+#else
+	_movi	a8, 0		// set up for the maximum loop count
+#endif
 	loop	a8, 2f		// loop forever (almost anyway)
 #endif
 1:	l8ui	a8, a3, 0
 	addi	a3, a3, 1
+#ifdef PSRAM_FIX
+	nop
+	nop
+	nop
+#endif
 	s8i	a8, a10, 0
 	addi	a4, a4, -1
 	beqz	a4, 3f
@@ -225,7 +264,11 @@ strncpy:
 #endif
 2:	j	.Lfill
 
-3:	leaf_return
+3:	
+#ifdef PSRAM_FIX
+	memw
+#endif
+	leaf_return
 .end schedule
 
 	.size	strncpy, . - strncpy
