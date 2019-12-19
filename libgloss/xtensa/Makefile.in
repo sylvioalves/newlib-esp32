@@ -1,129 +1,195 @@
-# Copyright (C) 2017 Cadence Design Systems Inc.
-#
-# The authors hereby grant permission to use, copy, modify, distribute,
-# and license this software and its documentation for any purpose, provided
-# that existing copyright notices are retained in all copies and that this
-# notice is included verbatim in any distributions. No written agreement,
-# license, or royalty fee is required for any of the authorized uses.
-# Modifications to this software may be copyrighted by their authors
-# and need not follow the licensing terms described here, provided that
-# the new terms are clearly indicated on the first page of each file where
-# they apply.
+#-------------------------------------------------------------------------
+# Source files
+#-------------------------------------------------------------------------
 
 # Makefile for libgloss/xtensa.
+gloss_hdrs =
 
-DESTDIR =
-VPATH = @srcdir@ @srcdir@/..
-srcdir = @srcdir@
-objdir = .
-srcroot = $(srcdir)/../..
-objroot = $(objdir)/../..
+gloss_srcs =
 
-prefix = @prefix@
-exec_prefix = @exec_prefix@
+gloss_specs = \
+	default.specs \
+	nano.specs
 
-host_alias = @host_alias@
-target_alias = @target_alias@
+# Extra files
 
-bindir = @bindir@
-libdir = @libdir@
-tooldir = $(exec_prefix)/$(target_alias)
+crt0_asm      = crt0.S
 
 # Multilib support variables.
 # TOP is used instead of MULTI{BUILD,SRC}TOP.
+
 MULTIDIRS =
 MULTISUBDIR =
 MULTIDO = true
 MULTICLEAN = true
 
-INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA = @INSTALL_DATA@
+#-------------------------------------------------------------------------
+# Basic setup
+#-------------------------------------------------------------------------
 
-SHELL = /bin/sh
+# Default is to build the prereqs of the all target (defined at bottom)
 
-CC = @CC@
+default : all
+.PHONY : default
 
-AS = @AS@
-AR = @AR@
-LD = @LD@
-RANLIB = @RANLIB@
-AR_FLAGS = rc
+# Source directory
 
-OBJDUMP = `if [ -f ${objroot}/../binutils/objdump ] ; \
-	then echo ${objroot}/../binutils/objdump ; \
-	else t='$(program_transform_name)'; echo objdump | sed -e $$t ; fi`
-OBJCOPY = `if [ -f ${objroot}/../binutils/objcopy ] ; \
-	then echo ${objroot}/../binutils/objcopy ; \
-	else t='$(program_transform_name)'; echo objcopy | sed -e $$t ; fi`
+obj_dir := .
+src_dir := @srcdir@
+VPATH   := $(src_dir)
 
-#LD_SCRIPTS = ft32-elf-common.ld sim.ld
+# Installation directories
 
-SIM_CRT = crt1-sim.o
-SIM_BSP = libsim.a
-SIM_OBJS =
-#SIM_OBJS = fstat.o \
-#	   getpid.o \
-#	   isatty.o \
-#	   kill.o \
-#	   sbrk.o \
-#	   sim-close.o \
-#	   sim-exit.o \
-#	   sim-inbyte.o \
-#	   sim-lseek.o \
-#	   sim-open.o \
-#	   sim-read.o \
-#	   sim-time.o \
-#	   sim-unlink.o \
-#	   sim-write.o \
-#	   stat.o
+prefix  := @prefix@
+DESTDIR ?= $(prefix)
 
-#### Host specific Makefile fragment comes in here.
-@host_makefile_frag@
+install_hdrs_dir := $(DESTDIR)$(prefix)/$(target_alias)/include/machine
+install_libs_dir  = $(DESTDIR)$(prefix)/$(target_alias)/lib${MULTISUBDIR}
 
-all: $(SIM_CRT) $(SIM_BSP)
+#-------------------------------------------------------------------------
+# Programs and flags 
+#-------------------------------------------------------------------------
 
-$(SIM_BSP): $(SIM_OBJS)
-	$(AR) $(ARFLAGS) $@ $?
+# C compiler
+
+CC            := @CC@
+CFLAGS        := @CFLAGS@
+CPPFLAGS      := -I$(obj_dir) -I$(src_dir)
+COMPILE       := $(CC) -MMD -MP $(CPPFLAGS) $(CFLAGS)
+
+# Library creation
+
+AR            := @AR@
+RANLIB        := @RANLIB@
+
+# Installation
+
+INSTALL       := @INSTALL@
+INSTALL_DATA  := @INSTALL_DATA@
+
+#-------------------------------------------------------------------------
+# Build Object Files from C Source
+#-------------------------------------------------------------------------
+
+gloss_c_srcs = $(filter %.c, $(gloss_srcs))
+gloss_c_objs = $(patsubst %.c, %.o, $(notdir $(gloss_c_srcs)))
+gloss_c_deps = $(patsubst %.c, %.d, $(notdir $(gloss_c_srcs)))
+
+gloss_objs += $(gloss_c_objs)
+deps += $(gloss_c_deps)
+junk += $(gloss_c_deps) $(gloss_c_objs)
+
+#-------------------------------------------------------------------------
+# Build Object Files from Assembly Source
+gloss_asm_srcs = $(filter %.S, $(gloss_srcs))
+gloss_asm_objs = $(patsubst %.S, %.o, $(notdir $(gloss_asm_srcs)))
+gloss_asm_deps = $(patsubst %.S, %.d, $(notdir $(gloss_asm_srcs)))
+
+$(gloss_asm_objs) : %.o : %.S
+	$(COMPILE) -c -o $@ $<
+
+gloss_objs += $(gloss_asm_objs)
+deps += $(gloss_asm_deps)
+junk += $(gloss_asm_deps) $(gloss_asm_objs)
+
+#-------------------------------------------------------------------------
+# Build libgloss.a
+#-------------------------------------------------------------------------
+
+gloss_lib  = libgloss.a
+$(gloss_lib) : $(gloss_objs)
+	$(AR) rcv $@ $^
 	$(RANLIB) $@
 
-#fstat.o: $(srcdir)/fstat.c
-#getpid.o: $(srcdir)/getpid.c
-#isatty.o: $(srcdir)/isatty.c
-#kill.o: $(srcdir)/kill.c
-#putnum.o: $(srcdir)/putnum.c
-#sbrk.o: $(srcdir)/sbrk.c
-#sim-close.o: $(srcdir)/sim-close.S
-#sim-exit.o: $(srcdir)/sim-exit.S
-#sim-inbyte.o: $(srcdir)/sim-inbyte.c
-#sim-lseek.o: $(srcdir)/sim-lseek.c
-#sim-open.o: $(srcdir)/sim-open.S
-#sim-read.o: $(srcdir)/sim-read.S
-#sim-time.o: $(srcdir)/sim-time.c
-#sim-unlink.o: $(srcdir)/sim-unlink.S
-#sim-write.o: $(srcdir)/sim-write.S
-#stat.o: $(srcdir)/stat.c
+junk += $(gloss_lib)
 
-install: $($(CPU)_INSTALL)
-	$(INSTALL_DATA) $(SIM_CRT) $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}/$(SIM_CRT)
-	$(INSTALL_DATA) $(SIM_BSP) $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}/$(SIM_BSP)
-	for x in ${LD_SCRIPTS}; do \
-	  ${INSTALL_DATA} ${srcdir}/$$x $(DESTDIR)${tooldir}/lib/$$x; \
-	done;
+install_hdrs += $(gloss_hdrs)
+install_libs += $(gloss_lib)
+install_specs += $(gloss_specs)
 
-clean mostlyclean:
-	rm -f *.o *.a
+#-------------------------------------------------------------------------
+# Build crt0.o
+#-------------------------------------------------------------------------
 
-distclean maintainer-clean realclean: clean
-	rm -f Makefile config.cache config.log config.status
+crt0_obj  = $(patsubst %.S, %.o, $(crt0_asm))
+crt0_deps = $(patsubst %.S, %.d, $(crt0_asm))
 
-.PHONY: info dvi doc install-info clean-info
-info doc dvi:
-install-info:
-clean-info:
+$(crt0_obj) : %.o : %.S
+	$(COMPILE) -c $<
 
-Makefile: Makefile.in config.status @host_makefile_frag_path@
-	$(SHELL) config.status
+deps += $(crt0_deps)
+junk += $(crt0_deps) $(crt0_obj)
 
-config.status: configure
-	$(SHELL) config.status --recheck
+install_libs += $(crt0_obj)
+
+#-------------------------------------------------------------------------
+# Autodependency files
+#-------------------------------------------------------------------------
+
+-include $(deps)
+
+deps : $(deps)
+.PHONY : deps
+
+#-------------------------------------------------------------------------
+# Installation
+#-------------------------------------------------------------------------
+
+install_hdrs_wdir += $(addprefix $(src_dir)/, $(install_hdrs))
+install-hdrs : $(install_hdrs_wdir)
+	test -d $(install_hdrs_dir) || mkdir -p $(install_hdrs_dir)
+	for file in $^; do \
+		$(INSTALL_DATA) $$file $(install_hdrs_dir)/; \
+	done
+
+install-libs : $(install_libs)
+	test -d $(install_libs_dir) || mkdir -p $(install_libs_dir)
+	for file in $^; do \
+		$(INSTALL_DATA) $$file $(install_libs_dir)/$$file; \
+	done
+
+install-specs : $(install_specs)
+	test -d $(install_libs_dir) || mkdir -p $(install_libs_dir)
+	for file in $^; do \
+		$(INSTALL_DATA) $$file $(install_libs_dir)/; \
+	done
+
+install : install-hdrs install-libs install-specs
+.PHONY : install install-hdrs install-libs
+
+#-------------------------------------------------------------------------
+# Regenerate configure information
+#-------------------------------------------------------------------------
+
+configure_prereq = \
+  $(src_dir)/configure.in \
+
+$(src_dir)/configure : $(configure_prereq)
+	cd $(src_dir) && autoconf
+
+config.status : $(src_dir)/configure
+	./config.status --recheck
+
+Makefile : $(src_dir)/Makefile.in config.status
+	./config.status
+
+dist_junk += config.status Makefile config.log
+
+#-------------------------------------------------------------------------
+# Default
+#-------------------------------------------------------------------------
+
+all : $(install_libs)
+.PHONY : all
+
+#-------------------------------------------------------------------------
+# Clean up junk
+#-------------------------------------------------------------------------
+
+clean :
+	rm -rf *~ \#* $(junk)
+
+distclean :
+	rm -rf *~ \#* $(junk) $(dist_junk)
+
+.PHONY : clean distclean
