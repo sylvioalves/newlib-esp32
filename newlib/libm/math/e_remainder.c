@@ -24,6 +24,8 @@
 
 #ifndef _DOUBLE_IS_32BITS
 
+#if defined(__XTENSA__) || defined(__riscv)
+
 #ifdef __STDC__
 static const double zero = 0.0;
 #else
@@ -76,5 +78,7 @@ static double zero = 0.0;
 	SET_HIGH_WORD(x,hx^sx);
 	return x;
 }
+
+#endif /* __XTENSA__ || __riscv*/
 
 #endif /* defined(_DOUBLE_IS_32BITS) */

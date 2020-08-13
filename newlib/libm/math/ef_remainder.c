@@ -15,6 +15,8 @@
 
 #include "fdlibm.h"
 
+#if defined(__XTENSA__) || defined(__riscv)
+
 #ifdef __STDC__
 static const float zero = 0.0;
 #else
@@ -66,3 +68,5 @@ static float zero = 0.0;
 	SET_FLOAT_WORD(x,hx^sx);
 	return x;
 }
+
+#endif /* __XTENSA__ || __riscv*/
