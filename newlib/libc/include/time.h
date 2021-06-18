@@ -190,8 +190,8 @@ int clock_getres (clockid_t clock_id, struct timespec *res);
 /* Create a Per-Process Timer, P1003.1b-1993, p. 264 */
 
 int timer_create (clockid_t clock_id,
- 	struct sigevent *__restrict evp,
-	timer_t *__restrict timerid);
+ 	struct sigevent *evp,
+	timer_t *timerid);
 
 /* Delete a Per_process Timer, P1003.1b-1993, p. 266 */
 

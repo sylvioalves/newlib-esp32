@@ -66,7 +66,7 @@ __strncpy_aux:
 	.global	strncpy
 	.type	strncpy, @function
 strncpy:
-	leaf_entry sp, 16
+	leaf_entry sp
 	/* a2 = dst, a3 = src */
 
 	mov	a10, a2		// leave dst in return value register

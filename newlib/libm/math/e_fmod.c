@@ -55,6 +55,9 @@ extern double __ieee754_remainder(double x, double y);
  * Method: shift and subtract
  */
 
+#include "fdlibm.h"
+
+#ifndef _DOUBLE_IS_32BITS
 
 #ifdef __STDC__
 static const double one = 1.0, Zero[] = {0.0, -0.0,};

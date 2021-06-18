@@ -56,6 +56,8 @@ extern float __ieee754_remainderf(float x, float y);
  * Method: shift and subtract
  */
 
+#include "fdlibm.h"
+
 #ifdef __STDC__
 static const float one = 1.0, Zero[] = {0.0, -0.0,};
 #else
