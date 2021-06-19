@@ -1,5 +1,4 @@
-/* Copyright (c) 2006 - 2016 Tensilica Inc.
-
+/* Copyright (c) 2006 Tensilica Inc.
    Permission is hereby granted, free of charge, to any person obtaining
    a copy of this software and associated documentation files (the
    "Software"), to deal in the Software without restriction, including
@@ -7,10 +6,8 @@
    distribute, sublicense, and/or sell copies of the Software, and to
    permit persons to whom the Software is furnished to do so, subject to
    the following conditions:
-
    The above copyright notice and this permission notice shall be included
    in all copies or substantial portions of the Software.
-
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -26,19 +23,15 @@
 # macros do not allocate any extra stack space, so they only work for
 # leaf functions that do not need to spill anything to the stack.
 
-	.macro	leaf_entry reg
+	.macro leaf_entry reg, size
 #if XCHAL_HAVE_WINDOWED && !__XTENSA_CALL0_ABI__
-#if XCHAL_HAVE_XEA3
-	entry	\reg, 32
-#else
-	entry	\reg, 16
-#endif
+	entry \reg, \size
 #else
 	/* do nothing */
 #endif
 	.endm
 
-	.macro	leaf_return
+	.macro leaf_return
 #if XCHAL_HAVE_WINDOWED && !__XTENSA_CALL0_ABI__
 	retw
 #else

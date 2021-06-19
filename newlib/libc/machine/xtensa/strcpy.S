@@ -30,7 +30,7 @@
 	.global	strcpy
 	.type	strcpy, @function
 strcpy:
-	leaf_entry sp
+	leaf_entry sp, 16
 	/* a2 = dst, a3 = src */
 
 	mov	a10, a2		// leave dst in return value register

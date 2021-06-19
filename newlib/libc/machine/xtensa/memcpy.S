@@ -22,7 +22,7 @@
    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 #include "xtensa-asm.h"
-
+		
 /* If the Xtensa Unaligned Load Exception option is not used, this
    code can run a few cycles faster by relying on the low address bits
    being ignored.  However, if the code is then run with an Xtensa ISS
@@ -134,7 +134,7 @@ __memcpy_aux:
 	.global	memcpy
 	.type	memcpy, @function
 memcpy:
-	leaf_entry sp
+	leaf_entry sp, 16
 	/* a2 = dst, a3 = src, a4 = len */
 
 	mov	a5, a2		// copy dst so that a2 is return value
@@ -341,5 +341,4 @@ memcpy:
 	.end schedule
 
 	.size	memcpy, . - memcpy
-
 

@@ -28,7 +28,7 @@
    The algorithm is as follows:
 
    Create a word with c in all byte positions.
-
+	
    If the destination is aligned, set 16B chunks with a loop, and then
    finish up with 8B, 4B, 2B, and 1B stores conditional on the length.
 
@@ -110,7 +110,7 @@ __memset_aux:
 	.global	memset
 	.type	memset, @function
 memset:
-	leaf_entry sp
+	leaf_entry sp, 16
 	/* a2 = dst, a3 = c, a4 = length */
 
 	/* Duplicate character into all bytes of word.  */

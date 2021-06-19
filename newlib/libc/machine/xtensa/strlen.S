@@ -30,7 +30,7 @@
 	.global	strlen
 	.type	strlen, @function
 strlen:
-	leaf_entry sp
+	leaf_entry sp, 16
 	/* a2 = s */
 
 	addi	a3, a2, -4	// because we overincrement at the end
@@ -63,9 +63,22 @@ strlen:
 /* String is word-aligned.  */
 
 	.align	4
+#if XCHAL_HAVE_LOOPS
+#if XCHAL_HAVE_DENSITY
+	/* (2 mod 4) alignment for loop instruction */
+#else
+	/* (1 mod 4) alignment for loop instruction */
+	.byte	0
+	.byte	0
+#endif
+#endif
 .Laligned:
 #if XCHAL_HAVE_LOOPS
-	movi	a8, 0		// set up for the maximum loop count
+#if XCHAL_HAVE_DENSITY
+	_movi.n	a8, 0		// set up for the maximum loop count
+#else
+	_movi	a8, 0		// set up for the maximum loop count
+#endif
 	loop	a8, .Lz3	// loop forever (almost anyway)
 #endif
 1:	l32i	a8, a3, 4	// get next word of string
